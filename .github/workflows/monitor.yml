@@ -15,8 +15,19 @@ jobs:
           python-version: "3.12"
       - name: Install dependencies
         run: pip install -r requirements.txt
+
       - name: Run monitor
-        run: python -m src.arcus_tracker.monitor
+        id: monitor
+        run: |
+          OUTPUT=$(python -m src.arcus_tracker.monitor)
+          echo "$OUTPUT"
+          # Extract whether changes were detected (simple check)
+          if echo "$OUTPUT" | grep -q '"changes_detected": true'; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "changes=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Commit history if changed
         run: |
           git config user.name "github-actions[bot]"
@@ -24,3 +35,15 @@ jobs:
           git add data/history.json || true
           git diff --staged --quiet || git commit -m "Update monitor history [skip ci]"
           git push || true
+
+      - name: Send Telegram alert if changes detected
+        if: steps.monitor.outputs.changes == 'true'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          MESSAGE="Arcus Points Monitor: Changes detected in official sources.\nCheck the repository for updates.\nhttps://github.com/demarco2016/arcus-points-tracker"
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
+            -d text="${MESSAGE}" \
+            -d parse_mode="Markdown"
