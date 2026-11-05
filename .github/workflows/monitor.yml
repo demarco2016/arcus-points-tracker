@@ -1,0 +1,26 @@
+name: Daily Arcus Points Monitor
+
+on:
+  schedule:
+    - cron: "0 12 * * *"  # daily at 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run monitor
+        run: python -m src.arcus_tracker.monitor
+      - name: Commit history if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/history.json || true
+          git diff --staged --quiet || git commit -m "Update monitor history [skip ci]"
+          git push || true

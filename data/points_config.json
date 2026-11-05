@@ -1,0 +1,16 @@
+{
+  "weekly_points": 250000,
+  "distribution_weekday": 2,
+  "distribution_hour": 15,
+  "distribution_minute": 0,
+  "distribution_timezone": "America/New_York",
+  "season1_start": "2026-10-01",
+  "program_end_latest": "2027-06-30",
+  "snapshot_cutoff_confirmed": false,
+  "official_sources": [
+    "https://arcus.xyz/blog/introducing-arcus-points",
+    "https://app.arcus.xyz/rewards",
+    "https://x.com/arcus_xyz"
+  ],
+  "notes": "Distribution confirmed every Wednesday 3PM ET. Exact trading eligibility cutoff before distribution is not officially documented."
+}
