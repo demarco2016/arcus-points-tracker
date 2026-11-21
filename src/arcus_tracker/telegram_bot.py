@@ -9,6 +9,7 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 
 from .scheduler import countdown, trade_eligibility, next_distribution
 from .config import CONFIG
+from .storage import get_distributions, add_reminder, get_reminders
 
 load_dotenv()
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -64,6 +65,25 @@ async def sources(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = "Official sources:\n" + "\n".join(CONFIG["official_sources"])
     await update.message.reply_text(text)
 
+async def history(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    dist = get_distributions(limit=8)
+    if not dist:
+        await update.message.reply_text("No distribution history recorded yet.")
+        return
+    lines = ["Recent distributions:"]
+    for d in dist:
+        lines.append(f"• {d['week']} — {d['points']:,} pts")
+    await update.message.reply_text("\n".join(lines))
+
+async def remind(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_chat.id
+    username = update.effective_user.username or ""
+    add_reminder(chat_id, username)
+    await update.message.reply_text(
+        "Reminder registered.\n"
+        "You will be notified before the next Wednesday distribution (when the monitor runs)."
+    )
+
 def main():
     if not TOKEN:
         print("TELEGRAM_BOT_TOKEN not set. Skipping bot.")
@@ -74,6 +94,8 @@ def main():
     app.add_handler(CommandHandler("snapshot", snapshot))
     app.add_handler(CommandHandler("trade", trade))
     app.add_handler(CommandHandler("sources", sources))
+    app.add_handler(CommandHandler("history", history))
+    app.add_handler(CommandHandler("remind", remind))
     print("Telegram bot starting...")
     app.run_polling()
 
